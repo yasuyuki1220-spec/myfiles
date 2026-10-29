@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="マイファイル">
+<meta name="theme-color" content="#1b2029">
+<title>マイファイル</title>
+<link rel="apple-touch-icon" id="touchIcon" href="">
+<style>
+:root{--bg:#12151b;--card:#1b2029;--line:#2a303b;--tx:#e8ecf2;--sub:#8b94a3;--ac:#4aa3ff;--danger:#ff6b6b;--ok:#4cd08a;--fs:15px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;overscroll-behavior:none}
+[hidden]{display:none!important}
+button{font-family:inherit;touch-action:manipulation}
+#app{position:fixed;left:0;right:0;top:var(--vt,0);height:var(--vh,100dvh);display:flex;flex-direction:column;overflow:hidden}
+section{display:flex;flex-direction:column;height:100%;min-height:0}
+header{display:flex;align-items:center;gap:4px;padding:calc(env(safe-area-inset-top) + 6px) 8px 6px;background:var(--card);border-bottom:1px solid var(--line);flex:none}
+.ib{width:40px;height:40px;font-size:22px;background:none;border:0;color:var(--ac);flex:none}
+.tb{padding:7px 11px;border:1px solid var(--line);border-radius:8px;background:none;color:var(--ac);font-size:14px;flex:none}
+#crumb{flex:1;min-width:0;overflow-x:auto;white-space:nowrap;font-size:17px;font-weight:600;scrollbar-width:none}
+#crumb::-webkit-scrollbar{display:none}
+#crumb span{color:var(--ac);cursor:pointer}
+#crumb span:last-child{color:var(--tx)}
+.srch{padding:8px 10px;flex:none}
+input,textarea,select{font-family:inherit}
+.srch input,#find input{width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx);font-size:16px;outline:0}
+#banner{margin:0 10px 6px;padding:9px 12px;border-radius:10px;background:#3a2f12;color:#ffd47a;font-size:13px}
+#items{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(env(safe-area-inset-bottom) + 30px)}
+.row{display:flex;align-items:center;gap:10px;padding:10px 6px 10px 14px;border-bottom:1px solid var(--line)}
+.ico{font-size:22px;width:28px;text-align:center;flex:none}
+.nm{flex:1;min-width:0}
+.nm b{display:block;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nm small{color:var(--sub);font-size:12px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{padding:50px 24px;text-align:center;color:var(--sub);line-height:1.8}
+#fname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+#find{padding:6px 8px;background:var(--card);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px;flex:none}
+#find .fr{display:flex;gap:6px;align-items:center}
+#body{flex:1;min-height:0;position:relative;display:flex}
+#ta{flex:1;width:100%;border:0;outline:0;resize:none;background:var(--bg);color:var(--tx);font:var(--fs)/1.5 ui-monospace,Menlo,monospace;padding:10px;tab-size:2;white-space:pre-wrap;overflow-wrap:anywhere;-webkit-text-size-adjust:100%;border-radius:0}
+.nowrap #ta{white-space:pre;overflow-wrap:normal;overflow-x:auto}
+#tree{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 60px}
+#bin{flex:1;overflow:auto;padding:20px;text-align:center;color:var(--sub)}
+#bin img{max-width:100%;border-radius:8px}
+#stat{display:flex;justify-content:space-between;gap:8px;padding:5px 12px;font-size:12px;color:var(--sub);background:var(--card);border-top:1px solid var(--line);flex:none}
+#jmsg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#jmsg.ok{color:var(--ok)}#jmsg.ng{color:var(--danger)}
+#pos{flex:none}
+#sym{display:flex;gap:5px;overflow-x:auto;padding:6px 6px calc(env(safe-area-inset-bottom) + 6px);background:var(--card);flex:none;scrollbar-width:none}
+#sym::-webkit-scrollbar{display:none}
+#app.kb #sym{padding-bottom:6px}
+#sym button{flex:none;min-width:38px;height:36px;padding:0 9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--tx);font:16px ui-monospace,Menlo,monospace}
+.tn{margin-left:10px;border-left:1px solid var(--line);padding-left:6px}
+.th{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:5px 0}
+.th input,.th textarea,.th select{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:16px;outline:0}
+.th input.key{width:130px;color:#ffc66d}
+.th .idx{color:var(--sub);min-width:26px;font-family:ui-monospace,Menlo,monospace;font-size:14px}
+.th select{font-size:13px;padding:5px 3px;color:var(--sub)}
+.th .tg{background:none;border:0;color:var(--ac);font-size:18px;width:26px;height:30px;padding:0}
+.th .sm{background:none;border:0;color:var(--sub);font-size:18px;width:32px;height:30px;padding:0;margin-left:auto}
+.th .sum{color:var(--sub);font-size:13px}
+.th .val{flex:1 1 100%;min-height:34px;resize:none;font-family:ui-monospace,Menlo,monospace;font-size:16px}
+.th .val.bad{border-color:var(--danger)}
+.addc{margin:2px 0 6px 16px;padding:6px 12px;border-radius:8px;border:1px dashed var(--line);background:none;color:var(--ac);font-size:14px}
+.ov{position:fixed;left:0;right:0;top:var(--vt,0);height:var(--vh,100dvh);background:#0009;z-index:50;display:flex;align-items:flex-end}
+.sh{width:100%;background:var(--card);border-radius:16px 16px 0 0;padding:6px 8px calc(env(safe-area-inset-bottom) + 8px);max-height:75%;overflow:auto}
+.sh h4{margin:10px 12px 4px;color:var(--sub);font-weight:500;font-size:13px;word-break:break-all}
+.sh button{display:block;width:100%;text-align:left;padding:14px 12px;background:none;border:0;border-bottom:1px solid var(--line);color:var(--tx);font-size:17px}
+.sh button:last-child{border-bottom:0}
+.sh .danger{color:var(--danger)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 90px);background:#000d;color:#fff;padding:9px 16px;border-radius:20px;font-size:14px;z-index:99;max-width:86%;text-align:center;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="app">
+  <section id="list">
+    <header>
+      <button id="up" class="ib" hidden>‹</button>
+      <div id="crumb"></div>
+      <button id="addBtn" class="ib">＋</button>
+      <button id="moreBtn" class="ib">⋯</button>
+    </header>
+    <div class="srch"><input id="q" type="search" placeholder="ファイル名・中身を検索" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <div id="banner" hidden></div>
+    <div id="items"></div>
+  </section>
+
+  <section id="editor" hidden>
+    <header>
+      <button id="back" class="ib">‹</button>
+      <div id="fname"></div>
+      <button id="modeBtn" class="tb" hidden>ツリー</button>
+      <button id="edMore" class="ib">⋯</button>
+    </header>
+    <div id="find" hidden>
+      <div class="fr"><input id="fq" placeholder="検索" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="tb" id="fnext">次へ</button><button class="tb" id="fclose">✕</button></div>
+      <div class="fr"><input id="fr" placeholder="置換後" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="tb" id="frep">置換</button><button class="tb" id="fall">全部</button></div>
+    </div>
+    <div id="body">
+      <textarea id="ta" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" wrap="soft"></textarea>
+      <div id="tree" hidden></div>
+      <div id="bin" hidden></div>
+    </div>
+    <div id="stat"><span id="jmsg"></span><span id="pos"></span></div>
+    <div id="sym"></div>
+  </section>
+</div>
+<input type="file" id="fin" multiple hidden>
+
+<script>
+'use strict';
+//#UTIL-START
+function jsonCheck(s){
+  let i=0;const n=s.length;
+  const err=m=>{throw {pos:Math.min(i,n),msg:m}};
+  const ws=()=>{while(i<n&&' \t\n\r'.includes(s[i]))i++};
+  const NUM=/-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d+)?|true|false|null/y;
+  function str(){
+    i++;
+    while(i<n){
+      const c=s[i];
+      if(c==='"'){i++;return}
+      if(c==='\\'){i+=2;continue}
+      if(c==='\n')err('文字列が閉じていません(")');
+      i++;
+    }
+    err('文字列が閉じていません(")');
+  }
+  function val(){
+    ws();
+    if(i>=n)err('値がありません');
+    const c=s[i];
+    if(c==='{'){
+      i++;ws();
+      if(s[i]==='}'){i++;return}
+      for(;;){
+        ws();
+        if(s[i]!=='"')err('キーは "..." で囲む必要があります');
+        str();ws();
+        if(s[i]!==':')err('「:」が必要です');
+        i++;val();ws();
+        if(s[i]===','){i++;continue}
+        if(s[i]==='}'){i++;return}
+        err('「,」か「}」が必要です');
+      }
+    }
+    if(c==='['){
+      i++;ws();
+      if(s[i]===']'){i++;return}
+      for(;;){
+        val();ws();
+        if(s[i]===','){i++;continue}
+        if(s[i]===']'){i++;return}
+        err('「,」か「]」が必要です');
+      }
+    }
+    if(c==='"'){str();return}
+    NUM.lastIndex=i;
+    const m=NUM.exec(s);
+    if(!m)err('不正な値です');
+    i+=m[0].length;
+  }
+  try{val();ws();if(i<n)err('余分な文字があります');return null}
+  catch(e){if(e&&e.pos!==undefined)return e;throw e}
+}
+const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){let c=-1;for(let i=0;i<b.length;i++)c=crcT[(c^b[i])&255]^(c>>>8);return (c^-1)>>>0}
+function makeZip(entries){
+  const enc=new TextEncoder();const parts=[];const cd=[];let off=0;
+  const d=new Date();
+  const dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  const tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1);
+  for(const e of entries){
+    const nm=enc.encode(e.name);const crc=crc32(e.data);const sz=e.data.length;
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);
+    lh.setUint16(10,tm,true);lh.setUint16(12,dt,true);lh.setUint32(14,crc,true);lh.setUint32(18,sz,true);lh.setUint32(22,sz,true);
+    lh.setUint16(26,nm.length,true);lh.setUint16(28,0,true);
+    parts.push(new Uint8Array(lh.buffer),nm,e.data);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);
+    ch.setUint16(12,tm,true);ch.setUint16(14,dt,true);ch.setUint32(16,crc,true);ch.setUint32(20,sz,true);ch.setUint32(24,sz,true);
+    ch.setUint16(28,nm.length,true);ch.setUint32(42,off,true);
+    cd.push(new Uint8Array(ch.buffer),nm);
+    off+=30+nm.length+sz;
+  }
+  let cdSize=0;cd.forEach(x=>cdSize+=x.length);
+  const end=new DataView(new ArrayBuffer(22));
+  end.setUint32(0,0x06054b50,true);end.setUint16(8,entries.length,true);end.setUint16(10,entries.length,true);
+  end.setUint32(12,cdSize,true);end.setUint32(16,off,true);
+  return new Blob([...parts,...cd,new Uint8Array(end.buffer)],{type:'application/zip'});
+}
+async function unzip(buf){
+  const v=new DataView(buf);const u8=new Uint8Array(buf);
+  let e=-1;
+  for(let i=buf.byteLength-22;i>=Math.max(0,buf.byteLength-66000);i--){if(v.getUint32(i,true)===0x06054b50){e=i;break}}
+  if(e<0)throw new Error('zipではありません');
+  const n=v.getUint16(e+10,true);let p=v.getUint32(e+16,true);
+  const out=[];const dec=new TextDecoder();
+  for(let k=0;k<n;k++){
+    if(v.getUint32(p,true)!==0x02014b50)break;
+    const meth=v.getUint16(p+10,true),csz=v.getUint32(p+20,true),nl=v.getUint16(p+28,true),el=v.getUint16(p+30,true),cl=v.getUint16(p+32,true),lo=v.getUint32(p+42,true);
+    const name=dec.decode(u8.subarray(p+46,p+46+nl));
+    p+=46+nl+el+cl;
+    if(name.endsWith('/'))continue;
+    const lnl=v.getUint16(lo+26,true),lel=v.getUint16(lo+28,true);
+    const ds=lo+30+lnl+lel;const raw=u8.subarray(ds,ds+csz);
+    let data;
+    if(meth===0)data=raw.slice();
+    else if(meth===8)data=new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+    else continue;
+    out.push({name,data});
+  }
+  return out;
+}
+//#UTIL-END
+
+const $=s=>document.querySelector(s);
+const app=$('#app'),ta=$('#ta'),listEl=$('#items');
+const h=(t,a={},...c)=>{const e=document.createElement(t);for(const k in a){if(k==='class')e.className=a[k];else if(k.startsWith('on'))e.addEventListener(k.slice(2),a[k]);else e.setAttribute(k,a[k])}c.flat().filter(x=>x!=null&&x!==false).forEach(x=>e.append(x));return e};
+const enc=new TextEncoder();
+
+/* ---------- storage ---------- */
+let db;const cache=new Map();
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('myfiles',1);
+  r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('files',{keyPath:'path'});const x=d.createObjectStore('hist',{keyPath:'id',autoIncrement:true});x.createIndex('path','path')};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+function tx(store,mode,fn){return new Promise((res,rej)=>{const t=db.transaction(store,mode);const s=t.objectStore(store);let out;const r=fn(s);if(r&&'onsuccess'in r)r.onsuccess=()=>out=r.result;t.oncomplete=()=>res(out);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)})}
+function batch(ops){return new Promise((res,rej)=>{const t=db.transaction('files','readwrite');const s=t.objectStore('files');
+  ops.forEach(([k,r])=>{if(k==='put'){s.put(r);cache.set(r.path,r)}else{s.delete(r);cache.delete(r)}});
+  t.oncomplete=res;t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)})}
+const putRec=r=>batch([['put',r]]);
+const histList=p=>tx('hist','readonly',s=>s.index('path').getAll(p));
+async function addHist(path,text){await tx('hist','readwrite',s=>s.add({path,text,t:Date.now()}));const l=await histList(path);if(l.length>15)await tx('hist','readwrite',s=>{l.slice(0,l.length-15).forEach(x=>s.delete(x.id))})}
+async function histDel(path){const l=await histList(path);if(l.length)await tx('hist','readwrite',s=>{l.forEach(x=>s.delete(x.id))})}
+
+/* ---------- helpers ---------- */
+const parentOf=p=>p.includes('/')?p.slice(0,p.lastIndexOf('/')):'';
+const baseOf=p=>p.slice(p.lastIndexOf('/')+1);
+const join=(d,p)=>d?d+'/'+p:p;
+function cleanPath(s){s=(s||'').trim().replace(/\\/g,'/').replace(/\/+/g,'/').replace(/^\/|\/$/g,'');if(!s||s.split('/').some(x=>x==='..'||x==='.'||!x.trim()))return null;return s}
+function uniq(path){if(!cache.has(path))return path;const sl=path.lastIndexOf('/'),dot=path.lastIndexOf('.');const hasExt=dot>sl+1;const b=hasExt?path.slice(0,dot):path,e=hasExt?path.slice(dot):'';for(let n=2;;n++){const c=`${b} (${n})${e}`;if(!cache.has(c))return c}}
+const fmtSize=b=>b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB';
+const fmtTime=t=>new Date(t).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+const isJsonName=n=>/\.(json|webmanifest|geojson)$/i.test(n);
+const MIME={json:'application/json',html:'text/html',md:'text/markdown',txt:'text/plain',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',svg:'image/svg+xml',pdf:'application/pdf',zip:'application/zip'};
+const mimeOf=n=>MIME[(n.split('.').pop()||'').toLowerCase()]||'application/octet-stream';
+function toast(m){const t=h('div',{class:'toast'},m);document.body.append(t);setTimeout(()=>t.remove(),2200)}
+function sheet(title,items){const ov=h('div',{class:'ov',onclick:e=>{if(e.target===ov)ov.remove()}});
+  ov.append(h('div',{class:'sh'},h('h4',{},title||''),items.filter(Boolean).map(([l,fn,d])=>h('button',{class:d?'danger':'',onclick:()=>{ov.remove();fn()}},l))));
+  document.body.append(ov)}
+async function ensureDirs(path){const parts=path.split('/');const ops=[];for(let i=1;i<parts.length;i++){const d=parts.slice(0,i).join('/');if(!cache.has(d))ops.push(['put',{path:d,type:'dir',mtime:Date.now()}])}if(ops.length)await batch(ops)}
+async function addFromBytes(path,u8){
+  await ensureDirs(path);
+  let isText=u8.length===0;
+  if(!isText){isText=!u8.subarray(0,8000).includes(0);if(isText){try{new TextDecoder('utf-8',{fatal:true}).decode(u8)}catch{isText=false}}}
+  const rec={path,type:'file',mtime:Date.now(),size:u8.length};
+  if(isText)rec.text=new TextDecoder().decode(u8);else rec.blob=new Blob([u8],{type:mimeOf(path)});
+  await putRec(rec);
+}
+async function outFile(blob,name){
+  const f=new File([blob],name,{type:blob.type||'application/octet-stream'});
+  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return true}}catch(e){if(e&&e.name==='AbortError')return false}
+  const a=h('a',{href:URL.createObjectURL(blob),download:name});document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);return true;
+}
+async function recBytes(r){return r.text!=null?enc.encode(r.text):new Uint8Array(await r.blob.arrayBuffer())}
+async function zipOut(prefix,zipName){
+  const entries=[];
+  for(const r of [...cache.values()].sort((a,b)=>a.path.localeCompare(b.path))){
+    if(r.type!=='file')continue;
+    if(prefix&&!r.path.startsWith(prefix+'/'))continue;
+    entries.push({name:prefix?r.path.slice(prefix.length+1):r.path,data:await recBytes(r)});
+  }
+  if(!entries.length){toast('ファイルがありません');return}
+  const ok=await outFile(makeZip(entries),zipName);
+  if(ok&&!prefix){localStorage.setItem('lastBackup',String(Date.now()));render()}
+}
+
+/* ---------- list screen ---------- */
+let dir='';
+function crumb(){const c=$('#crumb');c.innerHTML='';const parts=dir?dir.split('/'):[];
+  c.append(h('span',{onclick:()=>{dir='';render()}},'ホーム'));
+  parts.forEach((p,i)=>{c.append(' / ');c.append(h('span',{onclick:()=>{dir=parts.slice(0,i+1).join('/');render()}},p))});
+  $('#up').hidden=!dir;c.scrollLeft=c.scrollWidth}
+function render(){
+  crumb();
+  const q=$('#q').value.trim().toLowerCase();
+  let recs;
+  if(q){recs=[...cache.values()].filter(r=>r.path.toLowerCase().includes(q)||(r.text&&r.text.toLowerCase().includes(q)))}
+  else recs=[...cache.values()].filter(r=>parentOf(r.path)===dir);
+  recs.sort((a,b)=>(a.type===b.type?0:a.type==='dir'?-1:1)||a.path.localeCompare(b.path,'ja',{numeric:true}));
+  const bn=$('#banner');const lb=+localStorage.getItem('lastBackup')||0;const nFiles=[...cache.values()].filter(r=>r.type==='file').length;
+  if(nFiles&&!q&&Date.now()-lb>7*86400000){bn.hidden=false;bn.textContent=lb?'最後のバックアップから7日以上たっています。タップでzipに保存':'まだバックアップがありません。タップでzipに保存(Safariのデータ消失対策)';bn.onclick=()=>zipOut('','myfiles-backup.zip')}else bn.hidden=true;
+  listEl.innerHTML='';
+  if(!recs.length){listEl.append(h('div',{class:'empty'},q?'見つかりません':'ここにはまだ何もありません\n右上の ＋ から作成・読み込みできます'));listEl.firstChild.style.whiteSpace='pre-line';return}
+  recs.forEach(r=>{
+    const isDir=r.type==='dir';
+    let sub=isDir?`${[...cache.values()].filter(x=>parentOf(x.path)===r.path).length}項目`:`${fmtSize(r.size||0)} · ${fmtTime(r.mtime)}`;
+    if(q)sub=r.path+(isDir?'':' · '+sub);
+    listEl.append(h('div',{class:'row',onclick:()=>{if(isDir){dir=r.path;$('#q').value='';render()}else openFile(r.path)}},
+      h('div',{class:'ico'},isDir?'📁':r.blob&&r.blob.type.startsWith('image/')?'🖼':isJsonName(r.path)?'🧾':'📄'),
+      h('div',{class:'nm'},h('b',{},baseOf(r.path)),h('small',{},sub)),
+      h('button',{class:'ib',style:'color:var(--sub);font-size:20px',onclick:e=>{e.stopPropagation();itemMenu(r)}},'⋯')));
+  });
+}
+function itemMenu(r){
+  const isDir=r.type==='dir';
+  sheet(r.path,[
+    ['名前変更・移動',()=>renameItem(r)],
+    !isDir&&['複製',()=>dupItem(r)],
+    [isDir?'このフォルダをzipで書き出し':'共有・書き出し',async()=>{if(isDir)zipOut(r.path,baseOf(r.path)+'.zip');else outFile(r.text!=null?new Blob([r.text],{type:mimeOf(r.path)}):r.blob,baseOf(r.path))}],
+    ['削除',()=>delItem(r),true]]);
+}
+async function renameItem(r){
+  const v=prompt('新しいパス(別フォルダへの移動も可)',r.path);if(v==null)return;
+  const np=cleanPath(v);if(!np||np===r.path){if(!np)toast('名前が正しくありません');return}
+  if(cache.has(np)){toast('同じ名前が既にあります');return}
+  if(r.type==='dir'&&np.startsWith(r.path+'/')){toast('自分の中には移動できません');return}
+  const moving=r.type==='dir'?[...cache.values()].filter(x=>x.path===r.path||x.path.startsWith(r.path+'/')):[r];
+  await ensureDirs(np);
+  const ops=[];
+  moving.forEach(x=>{ops.push(['del',x.path]);ops.push(['put',{...x,path:np+x.path.slice(r.path.length)}])});
+  await batch(ops);
+  render();
+}
+async function dupItem(r){const np=uniq(r.path);await putRec({...r,path:np,mtime:Date.now()});render();toast('複製しました: '+baseOf(np))}
+async function delItem(r){
+  const del=r.type==='dir'?[...cache.values()].filter(x=>x.path===r.path||x.path.startsWith(r.path+'/')):[r];
+  if(!confirm(`「${baseOf(r.path)}」${del.length>1?`(中の${del.length-1}項目を含む)`:''}を削除しますか?\n元に戻せません。`))return;
+  await batch(del.map(x=>['del',x.path]));
+  for(const x of del)if(x.type==='file')await histDel(x.path);
+  render();
+}
+$('#up').onclick=()=>{dir=parentOf(dir);render()};
+$('#q').addEventListener('input',()=>{clearTimeout($('#q')._t);$('#q')._t=setTimeout(render,200)});
+const TPL={
+ 'manifest.json':'{\n  "name": "アプリ名",\n  "short_name": "アプリ",\n  "start_url": "./index.html",\n  "display": "standalone",\n  "background_color": "#ffffff",\n  "theme_color": "#4aa3ff",\n  "icons": []\n}\n',
+ 'package.json':'{\n  "name": "my-app",\n  "version": "1.0.0",\n  "description": "",\n  "scripts": {},\n  "dependencies": {}\n}\n',
+ 'README.md':'# アプリ名\n\n## 概要\n\n## 機能\n\n- \n\n## メモ\n\n',
+ 'index.html':'<!doctype html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n<title>タイトル</title>\n</head>\n<body>\n\n</body>\n</html>\n',
+ '.gitignore':'node_modules/\n.DS_Store\n'
+};
+async function newFile(name,content){
+  const p=cleanPath(name);if(!p){toast('名前が正しくありません');return}
+  const full=join(dir,p);
+  if(cache.has(full)){toast('同じ名前が既にあります');return}
+  await ensureDirs(full);
+  await putRec({path:full,type:'file',text:content!=null?content:isJsonName(full)?'{}\n':'',size:0,mtime:Date.now()});
+  openFile(full);
+}
+$('#addBtn').onclick=()=>sheet('新規作成',[
+  ['新規ファイル',()=>{const n=prompt('ファイル名(例: app.json / docs/memo.md)','new.json');if(n!=null)newFile(n)}],
+  ['新規フォルダ',async()=>{const n=prompt('フォルダ名');if(n==null)return;const p=cleanPath(n);if(!p){toast('名前が正しくありません');return}const full=join(dir,p);if(cache.has(full)){toast('同じ名前が既にあります');return}await ensureDirs(full+'/x');await batch([['put',{path:full,type:'dir',mtime:Date.now()}]]);render()}],
+  ['テンプレートから作成',()=>sheet('テンプレート',Object.keys(TPL).map(k=>[k,()=>newFile(k,TPL[k])]))],
+  ['ファイルを読み込む(zip展開も可)',()=>$('#fin').click()]]);
+$('#moreBtn').onclick=()=>sheet('メニュー',[
+  ['全体をバックアップ(zip)',()=>zipOut('','myfiles-backup.zip')],
+  ['ファイル・zipを読み込む',()=>$('#fin').click()],
+  ['使用容量を見る',async()=>{try{const e=await navigator.storage.estimate();toast(`使用 ${fmtSize(e.usage||0)} / 上限目安 ${fmtSize(e.quota||0)}`)}catch{toast('取得できません')}}]]);
+$('#fin').onchange=async()=>{
+  const fin=$('#fin');
+  for(const f of fin.files){
+    try{
+      const buf=await f.arrayBuffer();
+      if(/\.zip$/i.test(f.name)){
+        const ents=await unzip(buf);const base=uniq(join(dir,f.name.replace(/\.zip$/i,'')));let n=0;
+        for(const e of ents){if(e.name.startsWith('__MACOSX')||/(^|\/)\.DS_Store$/.test(e.name))continue;const p=cleanPath(e.name);if(!p)continue;await addFromBytes(join(base,p),e.data);n++}
+        toast(`${n}個を「${baseOf(base)}」に展開しました`);
+      }else await addFromBytes(uniq(join(dir,f.name)),new Uint8Array(buf));
+    }catch(e){toast('読み込み失敗: '+f.name)}
+  }
+  fin.value='';render();
+};
+
+/* ---------- editor ---------- */
+let cur=null,dirty=false,saveT=0,lastSnap=0,mode='text',pushed=false,root=null;
+const collapsed=new Set();
+function setStat(){const j=$('#jmsg');
+  if(!cur){j.textContent='';return}
+  const rec=cache.get(cur);if(rec&&rec.blob){j.textContent='';return}
+  if(isJsonName(cur)){
+    if(!ta.value.trim()){j.className='';j.textContent='JSON: 空';return}
+    const e=jsonCheck(ta.value);
+    if(!e){j.className='ok';j.textContent='✓ JSON OK'}
+    else{const b=ta.value.slice(0,e.pos).split('\n');j.className='ng';j.textContent=`⚠ ${b.length}行${b[b.length-1].length+1}列: ${e.msg}`;j._pos=e.pos}
+  }else{j.className='';j.textContent=dirty?'保存中…':'保存済み'}
+}
+$('#jmsg').onclick=e=>{const j=e.currentTarget;if(j.classList.contains('ng')&&mode==='text')reveal(j._pos,j._pos)};
+function setPos(){const p=ta.selectionStart;const b=ta.value.slice(0,p).split('\n');$('#pos').textContent=`${b.length}:${b[b.length-1].length+1}`}
+function scrollToIdx(i){
+  const cs=getComputedStyle(ta);const m=document.createElement('div');
+  m.style.cssText=`position:absolute;visibility:hidden;top:0;left:0;white-space:${cs.whiteSpace};overflow-wrap:${cs.overflowWrap};font:${cs.font};padding:${cs.padding};width:${ta.clientWidth}px;tab-size:2;box-sizing:border-box`;
+  m.textContent=ta.value.slice(0,i)+'\u200b';document.body.append(m);const y=m.scrollHeight;m.remove();
+  ta.scrollTop=Math.max(0,y-ta.clientHeight/3);
+}
+function reveal(a,b){ta.focus({preventScroll:true});ta.setSelectionRange(a,b);scrollToIdx(a)}
+function onInput(){dirty=true;clearTimeout(saveT);saveT=setTimeout(flush,500);clearTimeout(onInput._t);onInput._t=setTimeout(()=>{setStat();setPos()},150);$('#jmsg').className!=='ng'&&!isJsonName(cur||'')&&($('#jmsg').textContent='保存中…')}
+async function flush(){
+  clearTimeout(saveT);if(!dirty||!cur)return;
+  const path=cur,rec=cache.get(path);if(!rec||rec.text==null)return;
+  const nt=ta.value;dirty=false;
+  try{
+    if(Date.now()-lastSnap>60000&&rec.text!==nt){await addHist(path,rec.text);lastSnap=Date.now()}
+    await putRec({...rec,text:nt,size:enc.encode(nt).length,mtime:Date.now()});
+    if(cur===path&&!isJsonName(path))$('#jmsg').textContent='保存済み';
+  }catch(e){dirty=true;toast('保存に失敗しました(容量不足の可能性)')}
+}
+function insText(t){
+  ta.focus();
+  let ok=false;try{ok=document.execCommand('insertText',false,t)}catch{}
+  if(!ok){ta.setRangeText(t,ta.selectionStart,ta.selectionEnd,'end');ta.dispatchEvent(new Event('input'))}
+}
+ta.addEventListener('input',onInput);
+['keyup','click','touchend','select'].forEach(ev=>ta.addEventListener(ev,()=>setTimeout(setPos,0)));
+ta.addEventListener('beforeinput',e=>{
+  if(e.inputType!=='insertLineBreak'&&e.inputType!=='insertParagraph')return;
+  const s=ta.selectionStart,en=ta.selectionEnd,v=ta.value;
+  const ls=v.lastIndexOf('\n',s-1)+1;const ind=/^[ \t]*/.exec(v.slice(ls,s))[0];
+  const prev=s>0?v[s-1]:'',next=en<v.length?v[en]:'';
+  const open='{[('.includes(prev)&&prev!=='';
+  e.preventDefault();
+  if(open&&'}])'.includes(next)&&next!==''){insText('\n'+ind+'  \n'+ind);const p=s+1+ind.length+2;ta.setSelectionRange(p,p)}
+  else insText('\n'+ind+(open?'  ':''));
+});
+function openFile(p){
+  const rec=cache.get(p);if(!rec)return;
+  cur=p;dirty=false;lastSnap=0;mode='text';
+  $('#list').hidden=true;$('#editor').hidden=false;$('#find').hidden=true;
+  $('#fname').textContent=baseOf(p);
+  const bin=rec.blob!=null;
+  ta.hidden=bin;$('#tree').hidden=true;$('#bin').hidden=!bin;$('#sym').hidden=bin;
+  $('#modeBtn').hidden=bin||!isJsonName(p);$('#modeBtn').textContent='ツリー';
+  if(bin){const b=$('#bin');b.innerHTML='';if(rec.blob.type.startsWith('image/')){const u=URL.createObjectURL(rec.blob);b.append(h('img',{src:u}))}else b.append(h('div',{},'テキストではないため、このアプリでは編集できません。\n共有・書き出しは一覧の ⋯ から。'));b.append(h('div',{style:'margin-top:12px;font-size:13px'},fmtSize(rec.size||0)));$('#jmsg').textContent='';$('#pos').textContent=''}
+  else{ta.value=rec.text;ta.scrollTop=0;ta.setSelectionRange(0,0);setStat();setPos()}
+  history.pushState({e:1},'');pushed=true;
+}
+async function closeEditor(fromPop){
+  if(!fromPop&&pushed){history.back();return}
+  pushed=false;await flush();cur=null;
+  $('#editor').hidden=true;$('#list').hidden=false;render();
+}
+$('#back').onclick=()=>closeEditor(false);
+addEventListener('popstate',()=>{if(cur)closeEditor(true)});
+addEventListener('pagehide',flush);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)flush()});
+
+/* symbol bar */
+const SYM=[['Tab','  '],['{}','{}',1],['[]','[]',1],['""','""',1],['()','()',1],[':',':'],[',',','],['◀','<'],['▶','>'],['↶','undo'],['↷','redo'],['<','<'],['>','>'],['/','/'],['=','='],[';',';'],["'","'"],['\\','\\'],['#','#'],['_','_'],['$','$'],['&','&']];
+const sym=$('#sym');
+SYM.forEach(([l,t,back],i)=>{
+  const b=h('button',{},l);
+  b.addEventListener('pointerdown',e=>e.preventDefault());
+  b.addEventListener('mousedown',e=>e.preventDefault());
+  b.addEventListener('click',()=>{
+    if(l==='◀'||l==='▶'){ta.focus();const p=Math.max(0,Math.min(ta.value.length,ta.selectionStart+(l==='◀'?-1:1)));ta.setSelectionRange(p,p);setPos();return}
+    if(t==='undo'||t==='redo'){ta.focus();document.execCommand(t);return}
+    insText(t);if(back){const p=ta.selectionStart-back;ta.setSelectionRange(p,p)}
+  });
+  sym.append(b);
+});
+// fix: duplicate '<' '>' arrow labels were used above for cursor; plain angle brackets remain as separate keys
+
+/* find / replace */
+const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function findNext(){
+  const q=$('#fq').value;if(!q)return false;
+  const v=ta.value.toLowerCase(),ql=q.toLowerCase();
+  let i=v.indexOf(ql,ta.selectionEnd);if(i<0)i=v.indexOf(ql,0);
+  if(i<0){toast('見つかりません');return false}
+  reveal(i,i+q.length);return true;
+}
+$('#fnext').onclick=findNext;
+$('#fclose').onclick=()=>{$('#find').hidden=true};
+$('#frep').onclick=()=>{
+  const q=$('#fq').value;if(!q)return;
+  const sel=ta.value.slice(ta.selectionStart,ta.selectionEnd);
+  if(sel.toLowerCase()===q.toLowerCase()){insText($('#fr').value)}
+  findNext();
+};
+$('#fall').onclick=()=>{
+  const q=$('#fq').value;if(!q)return;let n=0;const r=$('#fr').value;
+  const nv=ta.value.replace(new RegExp(esc(q),'gi'),()=>{n++;return r});
+  if(!n){toast('見つかりません');return}
+  ta.value=nv;onInput();toast(`${n}件を置換しました`);
+};
+
+/* json ops */
+function fmtJson(minify){
+  const e=jsonCheck(ta.value);if(e){toast('JSONにエラーがあります');return}
+  try{const o=JSON.parse(ta.value);ta.value=JSON.stringify(o,null,minify?0:2)+(minify?'':'\n');onInput();setStat()}catch{toast('整形できません')}
+}
+
+/* ---------- tree editor ---------- */
+const typeOf=v=>v===null?'null':Array.isArray(v)?'array':typeof v;
+const TYPES=[['string','文字'],['number','数値'],['boolean','真偽'],['null','null'],['object','{}'],['array','[]']];
+const defOf=t=>t==='string'?'':t==='number'?0:t==='boolean'?false:t==='null'?null:t==='object'?{}:[];
+const getAt=p=>p.reduce((o,k)=>o[k],root);
+function setAt(p,v){if(!p.length)root=v;else getAt(p.slice(0,-1))[p[p.length-1]]=v}
+function commit(){ta.value=JSON.stringify(root,null,2)+'\n';dirty=true;clearTimeout(saveT);saveT=setTimeout(flush,500);$('#jmsg').className='ok';$('#jmsg').textContent='✓ JSON OK'}
+function convert(v,t){
+  if(t==='string')return v!==null&&typeof v!=='object'?String(v):'';
+  if(t==='number'){const n=Number(v);return typeof v==='object'?0:isNaN(n)?0:n}
+  if(t==='boolean')return typeof v==='string'?v==='true':Boolean(v);
+  return defOf(t);
+}
+function renameKey(path,nk){
+  const par=getAt(path.slice(0,-1)),ok=path[path.length-1];
+  if(nk===ok)return;
+  if(Object.prototype.hasOwnProperty.call(par,nk)){toast('同じキーが既にあります');renderTree();return}
+  const ent=Object.entries(par).map(([k,v])=>k===ok?[nk,v]:[k,v]);
+  Object.keys(par).forEach(k=>delete par[k]);ent.forEach(([k,v])=>{par[k]=v});
+  commit();renderTree();
+}
+function childMenu(path,inArr){
+  const par=getAt(path.slice(0,-1)),k=path[path.length-1];
+  const keys=inArr?null:Object.keys(par);
+  const move=d=>{
+    if(inArr){const i=k,j=i+d;if(j<0||j>=par.length)return;[par[i],par[j]]=[par[j],par[i]]}
+    else{const i=keys.indexOf(k),j=i+d;if(j<0||j>=keys.length)return;[keys[i],keys[j]]=[keys[j],keys[i]];const ent=keys.map(x=>[x,par[x]]);keys.forEach(x=>delete par[x]);ent.forEach(([a,b])=>{par[a]=b})}
+    commit();renderTree();
+  };
+  sheet(String(k),[
+    ['上へ',()=>move(-1)],['下へ',()=>move(1)],
+    ['複製',()=>{const c=JSON.parse(JSON.stringify(par[k]));if(inArr)par.splice(k+1,0,c);else{let nk=k+'_copy';while(nk in par)nk+='_';par[nk]=c}commit();renderTree()}],
+    ['削除',()=>{if(typeof par[k]==='object'&&par[k]!==null&&!confirm('中身ごと削除しますか?'))return;if(inArr)par.splice(k,1);else delete par[k];commit();renderTree()},true]]);
+}
+function addChild(path){
+  const c=getAt(path);const isArr=Array.isArray(c);
+  sheet('追加する値の種類',TYPES.map(([t,l])=>[l,()=>{
+    if(isArr)c.push(defOf(t));
+    else{let k=prompt('キー名','key');if(k==null)return;if(Object.prototype.hasOwnProperty.call(c,k)){toast('同じキーが既にあります');return}c[k]=defOf(t)}
+    collapsed.delete(path.join('\u0001'));commit();renderTree();
+  }]));
+}
+function nodeEl(v,path,label,inArr){
+  const t=typeOf(v),id=path.join('\u0001'),isC=t==='object'||t==='array';
+  const head=h('div',{class:'th'});
+  if(isC)head.append(h('button',{class:'tg',onclick:()=>{collapsed.has(id)?collapsed.delete(id):collapsed.add(id);renderTree()}},collapsed.has(id)?'▸':'▾'));
+  if(label!==null)head.append(inArr?h('span',{class:'idx'},String(label)):h('input',{class:'key',value:label,autocapitalize:'off',autocorrect:'off',spellcheck:'false',onchange:e=>renameKey(path,e.target.value)}));
+  else head.append(h('span',{class:'idx'},'root'));
+  const sel=h('select',{onchange:e=>{setAt(path,convert(v,e.target.value));commit();renderTree()}},TYPES.map(([x,l])=>h('option',{value:x,...(x===t?{selected:''}:{})},l)));
+  head.append(sel);
+  if(isC)head.append(h('span',{class:'sum'},t==='array'?`[${v.length}]`:`{${Object.keys(v).length}}`));
+  if(label!==null)head.append(h('button',{class:'sm',onclick:()=>childMenu(path,inArr)},'⋯'));
+  const wrap=h('div',{class:'tn'},head);
+  if(t==='string'){
+    const a=h('textarea',{class:'val',rows:'1',autocapitalize:'off',autocorrect:'off',spellcheck:'false'});a.value=v;
+    const fit=()=>{a.style.height='auto';a.style.height=Math.min(a.scrollHeight,240)+'px'};
+    a.addEventListener('input',()=>{setAt(path,a.value);commit();fit()});head.append(a);setTimeout(fit,0);
+  }else if(t==='number'){
+    const a=h('input',{class:'val',inputmode:'decimal',value:String(v),autocapitalize:'off',autocorrect:'off'});
+    a.addEventListener('input',()=>{const s=a.value.trim();const n=Number(s);if(s===''||isNaN(n)){a.classList.add('bad');return}a.classList.remove('bad');setAt(path,n);commit()});head.append(a);
+  }else if(t==='boolean'){
+    head.append(h('select',{class:'val',onchange:e=>{setAt(path,e.target.value==='true');commit()}},h('option',{value:'true',...(v?{selected:''}:{})},'true'),h('option',{value:'false',...(!v?{selected:''}:{})},'false')));
+  }
+  if(isC&&!collapsed.has(id)){
+    const keys=t==='array'?v.map((_,i)=>i):Object.keys(v);
+    keys.forEach(k=>wrap.append(nodeEl(v[k],[...path,k],k,t==='array')));
+    wrap.append(h('button',{class:'addc',onclick:()=>addChild(path)},'＋ 追加'));
+  }
+  return wrap;
+}
+function renderTree(){const box=$('#tree');const st=box.scrollTop;box.innerHTML='';box.append(nodeEl(root,[],null,false));box.scrollTop=st}
+function setMode(m){
+  if(m==='tree'){
+    if(ta.value.trim()){const e=jsonCheck(ta.value);if(e){toast('JSONにエラーがあるためツリーを開けません');return}root=JSON.parse(ta.value)}else root={};
+    mode='tree';ta.hidden=true;$('#sym').hidden=true;$('#find').hidden=true;$('#tree').hidden=false;$('#modeBtn').textContent='テキスト';$('#pos').textContent='';collapsed.clear();renderTree();
+  }else{
+    mode='text';$('#tree').hidden=true;ta.hidden=false;$('#sym').hidden=false;$('#modeBtn').textContent='ツリー';setStat();setPos();
+  }
+}
+$('#modeBtn').onclick=()=>setMode(mode==='text'?'tree':'text');
+
+/* editor menu */
+function applyPrefs(){document.documentElement.style.setProperty('--fs',(localStorage.getItem('fs')||15)+'px');$('#body').classList.toggle('nowrap',localStorage.getItem('wrap')==='0');ta.setAttribute('wrap',localStorage.getItem('wrap')==='0'?'off':'soft')}
+$('#edMore').onclick=()=>{
+  if(!cur)return;const rec=cache.get(cur);const bin=rec.blob!=null;
+  sheet(cur,[
+    !bin&&mode==='text'&&['検索・置換',()=>{$('#find').hidden=false;$('#fq').focus()}],
+    !bin&&isJsonName(cur)&&['JSONを整形(インデント2)',()=>{if(mode==='tree')setMode('text');fmtJson(false)}],
+    !bin&&isJsonName(cur)&&['JSONを圧縮(1行)',()=>{if(mode==='tree')setMode('text');fmtJson(true)}],
+    !bin&&['編集履歴から戻す',async()=>{await flush();const l=(await histList(cur)).sort((a,b)=>b.t-a.t);if(!l.length){toast('履歴はまだありません');return}
+      sheet('履歴(タップで戻す)',l.map(x=>[fmtTime(x.t)+'  '+x.text.slice(0,18).replace(/\s+/g,' '),async()=>{await addHist(cur,ta.value);ta.value=x.text;if(mode==='tree')setMode('text');onInput();setStat();toast('戻しました')}]))}],
+    !bin&&['文字を大きく',()=>{localStorage.setItem('fs',Math.min(26,(+localStorage.getItem('fs')||15)+1));applyPrefs()}],
+    !bin&&['文字を小さく',()=>{localStorage.setItem('fs',Math.max(10,(+localStorage.getItem('fs')||15)-1));applyPrefs()}],
+    !bin&&['折り返し 切り替え',()=>{localStorage.setItem('wrap',localStorage.getItem('wrap')==='0'?'1':'0');applyPrefs()}],
+    ['共有・書き出し',async()=>{await flush();const r=cache.get(cur);outFile(r.text!=null?new Blob([r.text],{type:mimeOf(cur)}):r.blob,baseOf(cur))}],
+    ['名前変更・移動',async()=>{await flush();const r=cache.get(cur);const v=prompt('新しいパス',cur);if(v==null)return;const np=cleanPath(v);if(!np||np===cur){if(!np)toast('名前が正しくありません');return}if(cache.has(np)){toast('同じ名前が既にあります');return}await ensureDirs(np);await batch([['del',cur],['put',{...r,path:np}]]);cur=np;$('#fname').textContent=baseOf(np);toast('変更しました')}],
+    ['削除',async()=>{const r=cache.get(cur);if(!confirm(`「${baseOf(cur)}」を削除しますか?\n元に戻せません。`))return;dirty=false;clearTimeout(saveT);const p=cur;await batch([['del',p]]);await histDel(p);closeEditor(false)},true]]);
+};
+
+/* ---------- viewport / keyboard ---------- */
+function fit(){const v=window.visualViewport;const H=v?v.height:innerHeight,T=v?v.offsetTop:0;const r=document.documentElement.style;r.setProperty('--vh',H+'px');r.setProperty('--vt',T+'px');app.classList.toggle('kb',H<innerHeight-120)}
+if(window.visualViewport){visualViewport.addEventListener('resize',fit);visualViewport.addEventListener('scroll',fit)}
+addEventListener('resize',fit);fit();
+
+/* ---------- icon ---------- */
+(function(){try{const c=document.createElement('canvas');c.width=c.height=180;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,180,180);g.addColorStop(0,'#4aa3ff');g.addColorStop(1,'#2a5bd7');x.fillStyle=g;x.fillRect(0,0,180,180);
+  x.fillStyle='#fff';x.beginPath();x.moveTo(30,62);x.lineTo(72,62);x.lineTo(84,76);x.lineTo(150,76);x.lineTo(150,142);x.lineTo(30,142);x.closePath();x.fill();
+  x.fillStyle='#2a5bd7';x.font='bold 40px monospace';x.textAlign='center';x.fillText('{ }',90,120);
+  $('#touchIcon').href=c.toDataURL('image/png')}catch{}})();
+
+/* ---------- init ---------- */
+(async()=>{
+  try{db=await openDB()}catch(e){document.body.textContent='このブラウザでは保存機能(IndexedDB)が使えません。プライベートブラウズを解除してください。';return}
+  const all=await tx('files','readonly',s=>s.getAll());all.forEach(r=>cache.set(r.path,r));
+  applyPrefs();render();
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch{}
+})();
+</script>
+</body>
+</html>
